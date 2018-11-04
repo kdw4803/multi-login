@@ -1,0 +1,86 @@
+<html>
+
+<head>
+	<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+	<title>Login</title>
+</head>
+
+<body>
+	<ul id="account-list"></ul>
+	<div>
+		<input type="button" id="btn-add" value="계정추가" />
+	</div>
+	<div id="div-add" style="display: none;">
+		<input type="text" id="email" />
+		<input type="password" id="password" />
+		<input type="button" id="btn-login" value="로그인" />
+	</div>
+</body>
+
+</html>
+
+<script>
+	$(document).ready(function () {
+		var accounts = JSON.parse(getAccountsCookie()).sort((a1, a2) => a1.position - a2.position);
+
+		// cookie 에 저장된 accounts 정보들
+		for (var i = 0; i < accounts.length; i++) {
+			$("#account-list").append("<li class='li-account' style='width:200px; cursor:pointer;' value=" + accounts[i].position + ">" + accounts[i].email + "</li>");
+
+			$(".li-account").unbind("click").click(function () {
+				//로그인시간 update
+				updateLoginDate(Number($(this).val()));
+
+				location.href = "/test/u/" + $(this).val();
+			});
+		}
+
+		function updateLoginDate(position) {
+			var selected_account = accounts.filter(function (e) {
+				return e.position == position;
+			});
+
+			accounts.splice(accounts.findIndex(e => e.position == position), 1);
+			selected_account[0].last_logined_at = Date.now();
+			accounts.push(selected_account[0]);
+			document.cookie = "accounts=" + JSON.stringify(accounts);
+		}
+
+		function getAccountsCookie() {
+			var value = "; " + document.cookie;
+			var parts = value.split("; accounts=");
+			if (parts.length == 2) {
+				return parts.pop().split(";").shift();
+			} else {
+				return "[]";
+			};
+		}
+
+		$("#btn-add").click(function () {
+			$("#div-add").show();
+		});
+
+		$("#btn-login").click(function () {
+			var email = $("#email").val();
+
+			$.ajax({
+				url: "/create",
+				type: "post",
+				data: {
+					email: email
+				},
+				dataType: "json",
+				success: function (data) {
+					if (data.status == "success") {
+						document.cookie = "accounts=" + JSON.stringify(data.accounts);
+						location.href = "/test/u/" + data.id;
+					} else if (data.status == "duplicated") {
+						alert("이미 등록된 계정입니다.");
+					} else {
+						alert("실패하였습니다.");
+					}
+				}
+			});
+		});
+	});
+</script>
