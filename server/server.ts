@@ -1,5 +1,4 @@
 import express = require('express');
-import path = require('path');
 import bodyParser = require('body-parser');
 
 // Controllers (route handlers)
@@ -22,6 +21,8 @@ app.get('/test', mainController.test);
 app.get('/test/u/:id', mainController.test_logined);
 app.post('/create', mainController.create);
 
-app.listen(3000, function () {
+let server = app.listen(3000, function () {
     console.log('Example app listening on port 3000!')
 });
+
+module.exports = { app, server }
